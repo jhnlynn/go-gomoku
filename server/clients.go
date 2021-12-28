@@ -130,7 +130,7 @@ func (c *Client) handleMessage(data []byte) {
 		return
 	}
 
-	m := &message.Message {}
+	m := &message.Message{}
 
 	err := json.Unmarshal(data, m)
 
@@ -180,4 +180,40 @@ func (c *Client) disconnect() {
 		delete(c.Server.Invitation, c.Code)
 		invitationCode.Return(c.Code)
 	}
+}
+
+func (c *Client) error(m *message.Message) {
+	data, _ := json.Marshal(m)
+	c.Conn.WriteMessage(ws.TextMessage, data)
+}
+
+func (c *Client) invite() (int, *message.Message) {
+	code, err := invitationCode.Get()
+	if err != nil {
+		return 0, message.NewInsufficientInvitationCode()
+	}
+
+	c.Code = code
+	c.Server.Invite <- c
+	return code, nil
+}
+
+func (c *Client) accept(codeString string) *message.Message {
+	code, err := strconv.Atoi(codeString)
+	if err != nil || code < 0 || code > invitationCode.GetMaxSeed() {
+		return message.NewInvalidInvitationCode(codeString)
+	}
+
+	c.Server.InvitationsMutex.Lock()
+	defer c.Server.InvitationsMutex.Unlock()
+
+	_, ok := c.Server.Invitation[code]
+	if !ok {
+		return message.NewInvalidInvitationCode(codeString)
+	}
+
+	c.Code = code
+	c.Server.Accept <- c
+	invitationCode.Return(code)
+	return nil
 }

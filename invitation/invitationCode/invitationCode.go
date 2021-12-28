@@ -15,6 +15,10 @@ var (
 	mutex sync.Mutex
 )
 
+func GetMaxSeed() int {
+	return maxSeed
+}
+
 func initCode() {
 	for i := range ids {
 		ids[i] = i
