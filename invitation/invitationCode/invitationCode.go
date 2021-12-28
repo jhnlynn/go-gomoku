@@ -1,4 +1,4 @@
-package invitation
+package invitationCode
 
 import (
 	"errors"
@@ -10,8 +10,8 @@ import (
 const maxSeed = 9999
 
 var (
-	ids = [maxSeed + 1]int {}
-	end = maxSeed
+	ids   = [maxSeed + 1]int{}
+	end   = maxSeed
 	mutex sync.Mutex
 )
 
@@ -36,7 +36,7 @@ func Get() (int, error) {
 		return 0, errors.New("no available Id at the time")
 	}
 
-	i:= rand.Intn(end + 1)
+	i := rand.Intn(end + 1)
 	code := ids[i]
 	ids[i], ids[end] = ids[end], ids[i]
 	end -= 1
